@@ -938,7 +938,19 @@ jQuery(document).ready(function () {
             return false;
         }
 
-        removeElement(event, element);
+        if ($(element).closest('li.form-line.sort').find('.question-input').val() != '') {
+            swal({
+                text: Lang.get('lang.confirm_remove_question'),
+                icon: 'warning',
+                buttons: true
+            }).then(function (isConfirm) {
+                if (isConfirm) {
+                    removeElement(event, element);
+                }
+            });
+        } else {
+            removeElement(event, element);
+        }
     });
 
     // dropdown menu select element
@@ -2740,12 +2752,44 @@ jQuery(document).ready(function () {
 
     // remove section
     $('.survey-form').on('click', '.delete-section', function (e) {
+        var element = $(this);
         var numberOfSections = surveyData.data('number-section');
-        var currentSectionSelected = $(this).closest('.page-section');
+        var currentSectionSelected = element.closest('.page-section');
         var prevSection = $(currentSectionSelected).prev();
+        var question = element.closest('.page-section.sortable.ui-sortable').find('li.form-line.sort');
 
         if (numberOfSections == 1) {
             alertDanger({message: Lang.get('lang.can_not_remove_last_section')});
+
+            return false;
+        }
+
+        if ($(currentSectionSelected).find('.section-header-title').val() != '' ||
+            $(currentSectionSelected).find('.section-header-description').val() != '' ||
+            $(question).first().find('.question-input').val() != ''){
+            swal({
+                text: Lang.get('lang.confirm_remove_last_question'),
+                icon: 'warning',
+                buttons: true
+            }).then(function (isConfirm) {
+                if (isConfirm) {
+                    // remove validation tooltip
+                    currentSectionSelected.find('textarea[data-toggle="tooltip"], input[data-toggle="tooltip"]').each(function () {
+                        $(`#${element.attr('aria-describedby')}`).remove();
+                    });
+
+                    element.closest('.page-section').remove();
+                    surveyData.data('number-section', numberOfSections - 1);
+                    $('.total-section').html(numberOfSections - 1);
+
+                    $('.survey-form').find('.page-section').each(function (i) {
+                        element.find('.section-index').text(i + 1);
+                    });
+
+                    $(prevSection).find('.form-line.sort').first().click();
+                    scrollToSection($(prevSection).data('section-id'));
+                }
+            });
 
             return false;
         }

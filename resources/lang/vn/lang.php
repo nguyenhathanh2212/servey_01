@@ -158,6 +158,7 @@ return [
     'of' => 'của',
     'previous' => 'Quay lại',
     'confirm_remove_last_question' => 'Bạn có chắc chắn muốn xóa câu hỏi này và phần này không?',
+    'confirm_remove_question' => 'Bạn có chắc chắn muốn xóa câu hỏi này không?',
     'can_not_remove_last_section' => 'Không thể xóa! Khảo sát phải có ít nhất 1 phần!',
     'can_not_remove_last_question' => 'Không thể xóa! Khảo sát phải có ít nhất 1 câu hỏi!',
 
