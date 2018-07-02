@@ -3,6 +3,12 @@ $(document).ready(function() {
     var tokenManage = '';
 
     $(document).on('click', '.process-bar-survey', function(event) {
+        var numberIncognitoAnswer = $(this).attr('data-incognito-answer');
+
+        if (parseInt(numberIncognitoAnswer)) {
+            $('.number-incognito-answer').text(Lang.get('lang.count_incognito_answer', {count: numberIncognitoAnswer}));
+        }
+
         event.preventDefault();
         tokenManage = $(this).attr('data-token-manage');
         showStatusAnswer(tokenManage);

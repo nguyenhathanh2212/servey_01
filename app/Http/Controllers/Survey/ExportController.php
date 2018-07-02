@@ -20,7 +20,7 @@ class ExportController extends Controller
     public function export($token, $type, $name)
     {
         try {
-            $survey = $this->surveyRepository->where('token', $token)->first();
+            $survey = $this->surveyRepository->getSurveyFromToken($token);
 
             if (!$survey) {
                 throw new Exception('Survey not found', 1);

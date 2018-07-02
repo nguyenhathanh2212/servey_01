@@ -25,6 +25,22 @@ jQuery(document).ready(function () {
         var sectionsUpdateId = [];
         var questionsUpdateId = [];
         var answersUpdateId = [];
+
+        $('.form-line').map(function() {
+            var type = $(this).attr('data-question-type');
+            var id = $(this).attr('id');
+
+            if (id) {
+                // add sortable to answer of question multiple choice
+                if (type == 3) {
+                    multipleChoiceSortable(id);
+                }
+                // add sortable to answer of question checkboxes
+                if (type == 4) {
+                    checkboxesSortable(id);
+                }
+            }
+        })
     }
 
     function s4() {
@@ -54,6 +70,8 @@ jQuery(document).ready(function () {
     }
 
     function formSortable() {
+        checkRemoveSort();
+
         $('.survey-form ul.sortable').sortable({
             axis: 'y',
             handle: '.draggable-area',
@@ -64,6 +82,7 @@ jQuery(document).ready(function () {
             connectWith: '.page-section',
             items: '> li:not(:first, :last)',
             forcePlaceholderSize: true,
+            cancel: 'li.remove-softable',
             start: function(e, ui) {
                 if (ui.item.height() > 240) {
                     ui.item.offset(ui.placeholder.offset());
@@ -72,9 +91,11 @@ jQuery(document).ready(function () {
                 } else {
                     ui.placeholder.height(ui.item.height());
                 }
+                ui.item.find('.image-question-url').hide();
             },
             stop: function (event, ui) {
                 $(ui.item).removeAttr('style');
+                ui.item.find('.image-question-url').show();
 
                 // when move question, refresh name of question follow new section
                 var sectionId = ui.item.closest('ul.page-section.sortable').data('section-id');
@@ -86,7 +107,23 @@ jQuery(document).ready(function () {
                 ui.item.find('.image-question-hidden').attr('name', 'media' + name);
                 ui.item.find('.input-image-section-hidden').attr('name', 'media' + name);
                 ui.item.find('.video-section-url-hidden').attr('name', 'media' + name);
+
+                checkRemoveSort();
             },
+        });
+    }
+
+    function checkRemoveSort() {
+        $('.survey-form ul.sortable').map(function() {
+            var questions = $(this).find('li.form-line');
+
+            if (questions.length <= 1) {
+                questions.addClass('remove-softable');
+            } else {
+                questions.map(function() {
+                    questions.removeClass('remove-softable');
+                });
+            }
         });
     }
 
@@ -100,8 +137,15 @@ jQuery(document).ready(function () {
             classes: {
                 'ui-sortable-helper': 'hightlight'
             },
+            forcePlaceholderSize: true,
+            start: function(e, ui) {
+                ui.item.find('.answer-image-url').hide();
+                ui.item.height(40);
+                ui.placeholder.height(40);
+            },
             stop: function (event, ui) {
                 $(ui.item).removeAttr('style');
+                ui.item.find('.answer-image-url').show();
             },
         });
     }
@@ -116,8 +160,15 @@ jQuery(document).ready(function () {
             classes: {
                 'ui-sortable-helper': 'hightlight'
             },
+            forcePlaceholderSize: true,
+            start: function(e, ui) {
+                ui.item.find('.answer-image-url').hide();
+                ui.item.height(40);
+                ui.placeholder.height(40);
+            },
             stop: function (event, ui) {
                 $(ui.item).removeAttr('style');
+                ui.item.find('.answer-image-url').show();
             },
         });
     }
@@ -3459,6 +3510,7 @@ jQuery(document).ready(function () {
         $('.survey-form').find('.page-section').each(function (i) {
             $(this).find('.section-index').text(i + 1);
         });
+        formSortable();
         $('#modal-reorder-section').modal('hide');
     });
 

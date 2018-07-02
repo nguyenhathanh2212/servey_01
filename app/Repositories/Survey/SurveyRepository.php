@@ -55,7 +55,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
                         $resultQuestion = $this->getTextQuestionResult($question, $survey, $userRepo);
                     } else {
                         if ($question->answers->count()) {
-                            $resultQuestion = $this->getResultChoiceQuestion($question, $survey, $userRepo);
+                            $resultQuestion = $this->getResultChoiceQuestion($question, $survey, $userRepo, app(ResultInterface::class));
                         } else { // title
                             $resultQuestion['temp'] = $question->title;
                             $resultQuestion['total_answer_results'] = $totalAnswerResults;
@@ -728,13 +728,13 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
     public function getResultExport($survey)
     {
         $requiredSurvey = $survey->required;
-        $questions = app(QuestionInterface::class)
+        $questions = app(QuestionInterface::class)->withTrashed()
             ->whereIn('section_id', $survey->sections->pluck('id')->all())
             ->with('settings', 'section')->get()->sortBy('order')->sortBy('section_order');
         $results = $this->getResultsFollowOptionUpdate($survey, $survey->results(), app(UserInterface::class));
         $results = $results->with('question.section', 'answer.settings', 'user')->get()->groupBy(
             function($date) {
-                return Carbon::parse($date->created_at)->format('Y-m-d H:m:s.u');
+                return Carbon::parse($date->created_at)->format('Y-m-d H:i:s.u');
             }
         );
 

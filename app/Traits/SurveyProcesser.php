@@ -149,10 +149,11 @@ trait SurveyProcesser
     }
 
     // get result choice quesion
-    public function getResultChoiceQuestion($question, $survey, $userRepo)
+    public function getResultChoiceQuestion($question, $survey, $userRepo, $resultRepo)
     {
         $temp = [];
-        $results = $question->results();
+        $answers = $question->answers();
+        $results = $resultRepo->withTrashed()->whereIn('answer_id', $answers->pluck('id')->all());
         $results = $this->getResultsFollowOptionUpdate($survey, $results, $userRepo)->get();
         $totalAnswerResults = $results->count();
 

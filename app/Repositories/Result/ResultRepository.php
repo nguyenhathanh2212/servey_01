@@ -117,7 +117,7 @@ class ResultRepository extends BaseRepository implements ResultInterface
 
         $results = $results->groupBy(
             function($date) {
-                return Carbon::parse($date->created_at)->format('Y-m-d H:m:s');
+                return Carbon::parse($date->created_at)->format('Y-m-d H:i:s.u');
             }
         );
 

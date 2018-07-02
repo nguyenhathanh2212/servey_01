@@ -51,7 +51,7 @@ class Question extends Model
 
     public function results()
     {
-        return $this->hasManyThrough(Result::class, Answer::class)->withTrashed();
+        return $this->hasManyThrough(Result::class, Answer::class);
     }
 
     public function answerResults()
@@ -150,6 +150,6 @@ class Question extends Model
 
     public function getSectionOrderAttribute()
     {
-        return $this->section->order;
+        return $this->section ? $this->section->order : '';
     }
 }
