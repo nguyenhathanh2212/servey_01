@@ -16,6 +16,7 @@ class Result extends Model
         'survey_id',
         'content',
         'client_ip',
+        'token',
     ];
 
     public $timestamps = true;

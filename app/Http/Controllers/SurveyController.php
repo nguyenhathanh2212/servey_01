@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Repositories\Survey\SurveyInterface;
+use App\Repositories\Section\SectionInterface;
 use App\Repositories\Question\QuestionInterface;
 use App\Repositories\Answer\AnswerInterface;
 use App\Repositories\Invite\InviteInterface;
@@ -30,12 +31,14 @@ use App\Http\Requests\UpdateSurveySettingRequest;
 use Auth;
 use App\Traits\SurveyProcesser;
 use App\Traits\DoSurvey;
+use App\Traits\ManageSurvey;
 
 class SurveyController extends Controller
 {
-    use DispatchesJobs, SurveyProcesser, DoSurvey;
+    use DispatchesJobs, SurveyProcesser, DoSurvey, ManageSurvey;
 
     protected $surveyRepository;
+    protected $sectionRepository;
     protected $questionRepository;
     protected $answerRepository;
     protected $inviteRepository;
@@ -46,6 +49,7 @@ class SurveyController extends Controller
 
     public function __construct(
         SurveyInterface $surveyRepository,
+        SectionInterface $sectionRepository,
         QuestionInterface $questionRepository,
         AnswerInterface $answerRepository,
         InviteInterface $inviteRepository,
@@ -55,6 +59,7 @@ class SurveyController extends Controller
         ResultInterface $resultRepository
     ) {
         $this->surveyRepository = $surveyRepository;
+        $this->sectionRepository = $sectionRepository;
         $this->questionRepository = $questionRepository;
         $this->answerRepository = $answerRepository;
         $this->inviteRepository = $inviteRepository;
@@ -318,6 +323,10 @@ class SurveyController extends Controller
                 $this->userRepository
             );
 
+            // if (!empty($survey)) {
+            //     $this->open($survey);
+            // }
+
             DB::commit();
             
             $request->session()->flash('success', trans('lang.edit_survey_success'));
@@ -327,6 +336,7 @@ class SurveyController extends Controller
                 'redirect' => route('survey.management', $survey->token_manage),
             ]);
         } catch (Exception $e) {
+            dd($e);
             DB::rollback();
 
             return response()->json([
@@ -445,7 +455,7 @@ class SurveyController extends Controller
         return view('user.pages.list-survey', compact('surveys', 'invites', 'settings', 'surveyCloses'));
     }
 
-    public function open($id, Request $request)
+    public function openTmp($id, Request $request)
     {
         if ($request->ajax()) {
             try {

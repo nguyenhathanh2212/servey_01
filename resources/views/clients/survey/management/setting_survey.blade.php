@@ -3,25 +3,29 @@
     <div class="content-wrapper content-wrapper-management">
         <!-- /Scroll buttons -->
         <div class="offset-md-9">
-            <a href="javascript:void(0)" class="btn btn-danger" id="delete-survey"
-                data-toggle="tooltip" title="@lang('survey.delete')"
-                data-url="{{ route('ajax-survey-delete', $survey->token_manage) }}">
-                <i class="fa fa-trash" aria-hidden="true"></i>
-            </a>
-            <a href="{{ route('surveys.edit', $survey->token_manage) }}" class="btn btn-info"
+            @can('delete', $survey)
+                <a href="javascript:void(0)" class="btn btn-danger" id="delete-survey"
+                    data-toggle="tooltip" title="@lang('survey.delete')"
+                    data-url="{{ route('ajax-survey-delete', $survey->token_manage) }}">
+                    <i class="fa fa-trash" aria-hidden="true"></i>
+                </a>
+            @endcan
+            <a href="javascript:void(0)" data-url="{{ route('surveys.edit', $survey->token_manage) }}" class="btn btn-info"
                 id="edit-survey"
                 data-toggle="tooltip" title="@lang('survey.edit')">
                 <i class="fa fa-edit" aria-hidden="true"></i>
             </a>
-
-            <a href="javascript:void(0)" class="btn {{ $survey->isClose() ? 'hide-div' : '' }}" 
+            
+            <a href="javascript:void(0)"
+                class="btn {{ ($survey->isClose() || $survey->isDraft()) ? 'hide-div' : '' }}"
                 id="close-survey"
                 data-toggle="tooltip" title="@lang('survey.close')"
                 data-url="{{ route('ajax-survey-close', $survey->token_manage) }}">
                 <i class="fa fa-lock" aria-hidden="true" style="color: #333;"></i>
             </a>
 
-            <a href="javascript:void(0)" class="btn btn-warning {{ $survey->isOpen() ? 'hide-div' : '' }}" 
+            <a href="javascript:void(0)"
+                class="btn btn-warning {{ ($survey->isOpen() || $survey->isDraft()) ? 'hide-div' : '' }}" 
                 id="open-survey"
                 data-toggle="tooltip" title="@lang('survey.open')"
                 data-url="{{ route('ajax-survey-open', $survey->token_manage) }}">

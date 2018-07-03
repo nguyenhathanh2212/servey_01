@@ -34,10 +34,11 @@ class DoingSurveyMiddleware
         $limitAnswer = $survey->getLimitAnswer();
         $title = $survey->title;
 
-        if ($status != config('settings.survey.status.open') && Auth::user()->cannot('edit', $survey)) {
+        if ($status != config('settings.survey.status.open')
+            && (!Auth::check() || Auth::user()->cannot('edit', $survey))) {
             $content = trans('lang.you_do_not_have_permission');
 
-            return  new Response(view('clients.survey.detail.complete', compact('title', 'content')));
+            return new Response(view('clients.survey.detail.complete', compact('title', 'content')));
         }
 
         if (!Auth::check()) {

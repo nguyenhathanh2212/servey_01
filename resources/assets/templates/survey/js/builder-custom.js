@@ -2567,11 +2567,15 @@ jQuery(document).ready(function () {
 
         if (isExist == -1) {
             emailsMember.push(email);
+            var colDelete = $('#input-email-member').is(':visible')
+                ? `<td><a href="#" class="delete-member"><i class="fa fa-times"></i></a></td>`
+                : '';
+
             $('.table-show-email-manager tbody').append(`
                 <tr>
                     <td class="emails-member">${email}</td>
                     <td class="roles-member" val="${role}">${Lang.get('lang.editor')}</td>
-                    <td><a href="#" class="delete-member"><i class="fa fa-times"></i></a></td>
+                    ${colDelete}
                 </tr>
             `);
         }

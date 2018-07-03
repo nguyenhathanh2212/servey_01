@@ -201,6 +201,7 @@ return [
     */
 
     'add_manager' => 'Thêm người quản lý',
+    'manager' => 'Người quản lý',
     'editor' => 'Có thể sửa',
     'role' => 'Vai trò',
 
@@ -264,6 +265,8 @@ return [
         manage survey
     */
    
+   'manage_survey' => 'Quản lý survey',
+   'confirm_close_to_edit' => 'Khảo sát đang mở, bạn phải đóng khảo sát trước khi sửa!',
    'close_survey_success' => 'Đóng survey thành công!',
    'delete_survey_success' => 'Xóa survey thành công!',
    'open_survey_success' => 'Mở survey thành công!',

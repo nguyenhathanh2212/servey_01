@@ -28,7 +28,7 @@ class ResultRepository extends BaseRepository implements ResultInterface
         $survey = $survey->load('results', 'settings', 'invite');
 
         $clientInfo = $this->processAnswererInformation($data, $survey, $survey->getPrivacy());
-
+        $tokenResult = md5(uniqid(rand(), true));
         $resultsData = [];
         $sections = $data->get('sections');
 
@@ -41,6 +41,7 @@ class ResultRepository extends BaseRepository implements ResultInterface
                 foreach ($question['results'] as $result) {
                     $temp['answer_id'] = 0;
                     $temp['content'] = '';
+                    $temp['token'] = $tokenResult;
 
                     if (in_array($question['type'], [
                         config('settings.question_type.short_answer'),
@@ -69,16 +70,16 @@ class ResultRepository extends BaseRepository implements ResultInterface
         // when update result with option update is "only send question update", if user answer many times then delete old results 
         if ($survey->isSendUpdateOption() && $sendUpdateMails->contains($userMails)) {
             $timesAnswer = $survey->results->where('user_id', Auth::user()->id)
-                ->pluck('created_at')
+                ->pluck('token')
                 ->unique()->count();
 
             if ($timesAnswer > 1) {
                 $newestCreated = $survey->results->where('user_id', Auth::user()->id)
                     ->sortByDesc('created_at')
-                    ->first()->created_at;
+                    ->first()->token;
 
                 $survey->results()->where('user_id', Auth::user()->id)
-                    ->where('created_at', '!=', $newestCreated)->forceDelete();
+                    ->where('token', '!=', $newestCreated)->forceDelete();
             }
         }
 
@@ -88,10 +89,14 @@ class ResultRepository extends BaseRepository implements ResultInterface
         if ($survey->isSendUpdateOption() && $sendUpdateMails->contains($userMails)) {
             $results = $survey->results()->where('user_id', $clientInfo['user_id'])
                 ->orderBy('created_at', 'desc')->get();
+            $token = $results->first()->token;
             $createdAt = $results->first()->created_at;
             $resultsId = $results->pluck('id');
 
-            DB::table('results')->whereIn('id', $resultsId)->update(['created_at' => $createdAt]);
+            DB::table('results')->whereIn('id', $resultsId)->update([
+                'token' => $token,
+                'created_at' => $createdAt,
+            ]);
         }
     }
 
@@ -115,11 +120,7 @@ class ResultRepository extends BaseRepository implements ResultInterface
         $results = $survey->results();
         $results = $this->getResultsFollowOptionUpdate($survey, $results, $userRepo)->get();
 
-        $results = $results->groupBy(
-            function($date) {
-                return Carbon::parse($date->created_at)->format('Y-m-d H:i:s.u');
-            }
-        );
+        $results = $results->groupBy('token');
 
         $countResult = $results->count();
         $page = isset($request->page) ? $request->page : 1;

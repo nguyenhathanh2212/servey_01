@@ -10,7 +10,7 @@
                     <a class="nav-link active" data-toggle="tab" role="tab" href="#general_settings">@lang('lang.general_settings')</a>
                 </li>
                 <li class="nav-item nav-item-setting-survey">
-                    <a class="nav-link" data-toggle="tab" role="tab" href="#tab-add-manager">@lang('lang.add_manager')</a>
+                    <a class="nav-link" data-toggle="tab" role="tab" href="#tab-add-manager">@lang('lang.manager')</a>
                 </li>
                 <li class="nav-item nav-item-setting-survey" id="send-survey-setting">
                     <a class="nav-link" data-toggle="tab" role="tab" href="#tab-send-mails">@lang('lang.send_survey')</a>
@@ -238,7 +238,9 @@
                     <div class="form-group">
                         <div class="row">
                             <div class="col-md-8">
-                                <label for="" class="label-email">@lang('lang.add_manager')</label>
+                                @can('addMember', $survey)
+                                    <label for="" class="label-email">@lang('lang.add_manager')</label>
+                                @endcan
                             </div>
                         </div>
                         <div class="row">
@@ -246,13 +248,15 @@
                                 {!! Form::hidden('emails_member', '', ['class' => 'emails-member-hidden']) !!}
                             </div>
                             <div class="col-md-12">
-                                {!! Form::text('email', null, [
-                                    'class' => 'form-control input-email-member',
-                                    'id' => 'input-email-member',
-                                    'data-url' => route('ajax-suggest-email'),
-                                    'autocomplete' => 'off',
-                                    'placeholder' => trans('lang.email_placeholder'),
-                                ]) !!}
+                                @can('addMember', $survey)
+                                    {!! Form::text('email', null, [
+                                        'class' => 'form-control input-email-member',
+                                        'id' => 'input-email-member',
+                                        'data-url' => route('ajax-suggest-email'),
+                                        'autocomplete' => 'off',
+                                        'placeholder' => trans('lang.email_placeholder'),
+                                    ]) !!}
+                                @endcan
                                 <ul class="live-suggest-member-email"></ul>
                             </div>
                         </div>
@@ -263,7 +267,9 @@
                                 <tr>
                                     <th>@lang('lang.email')</th>
                                     <th>@lang('lang.role')</th>
-                                    <th><i class="fa fa-trash"></i></th>
+                                    @can('addMember', $survey)
+                                        <th><i class="fa fa-trash"></i></th>
+                                    @endcan
                                 </tr>
                             </thead>
                             <tbody></tbody>

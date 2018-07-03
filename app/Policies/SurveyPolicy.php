@@ -89,10 +89,10 @@ class SurveyPolicy
 
     public function close(User $user, Survey $survey)
     {
-        $creator = $survey->members->where('role', config('settings.survey.members.owner'))->first();
+        $members = $survey->members->pluck('id')->all();
 
-        // only creator can close survey
-        if ($user->id == $creator->id) {
+        // only creator editor can close survey
+        if (in_array($user->id, $members)) {
             return true;
         }
 
@@ -101,10 +101,10 @@ class SurveyPolicy
 
     public function open(User $user, Survey $survey)
     {
-        $creator = $survey->members->where('role', config('settings.survey.members.owner'))->first();
+        $members = $survey->members->pluck('id')->all();
 
-        // only creator can open survey
-        if ($user->id == $creator->id) {
+        // only creator editor can open survey
+        if (in_array($user->id, $members)) {
             return true;
         }
 
@@ -117,6 +117,18 @@ class SurveyPolicy
 
         // only creator, editor can view result survey.
         if (in_array($user->id, $members)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function addMember(User $user, Survey $survey)
+    {
+        $creator = $survey->members->where('role', config('settings.survey.members.owner'))->first();
+
+        // only creator can add member.
+        if ($user->id == $creator->id) {
             return true;
         }
 

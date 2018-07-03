@@ -739,11 +739,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
             ->whereIn('section_id', $survey->sections->pluck('id')->all())
             ->with('settings', 'section')->get()->sortBy('order')->sortBy('section_order');
         $results = $this->getResultsFollowOptionUpdate($survey, $survey->results(), app(UserInterface::class));
-        $results = $results->with('question.section', 'answer.settings', 'user')->get()->groupBy(
-            function($date) {
-                return Carbon::parse($date->created_at)->format('Y-m-d H:i:s.u');
-            }
-        );
+        $results = $results->with('question.section', 'answer.settings', 'user')->get()->groupBy('token');
 
         return [
             'questions' => $questions,
@@ -974,16 +970,25 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
 
     public function getOverviewSurvey($survey)
     {
-        $subQuery = DB::table('results')->where('survey_id', $survey->id);
-        $subQuery = $this->getResultsFollowOptionUpdate($survey, $subQuery, app(UserInterface::class));
+        $results = $survey->results();
+        $results = $this->getResultsFollowOptionUpdate($survey, $results, app(UserInterface::class))->get();
+        $results = $results->groupBy(
+            function($date) {
+                return Carbon::parse($date->created_at)->format('m-d-Y');
+            }
+        );
 
-        $subQuery = $subQuery->select('results.created_at')->groupBy('results.created_at');
+        $data = [];
 
-        return DB::table(DB::raw("({$subQuery->toSql()}) as result"))
-            ->select(DB::RAW("DATE_FORMAT(created_at, '%m/%d/%Y') as date"), DB::RAW("COUNT(DATE_FORMAT(created_at, '%m/%d/%Y')) as number"))
-            ->mergeBindings($subQuery)
-            ->groupBy('date')
-            ->get();
+        foreach ($results as $date => $result) {
+            $group = $result->groupBy('token');
+            $item = collect();
+            $item->date = $date;
+            $item->number = $group->count();
+            array_push($data, $item);
+        }
+
+        return collect($data);
     }
 
     public function getSurveyForResult($tokenManage)

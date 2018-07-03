@@ -10,7 +10,7 @@
                     <a class="nav-link active" data-toggle="tab" role="tab" href="#general_settings">@lang('lang.general_settings')</a>
                 </li>
                 <li class="nav-item nav-item-setting-survey">
-                    <a class="nav-link" data-toggle="tab" role="tab" href="#tab-add-manager">@lang('lang.add_manager')</a>
+                    <a class="nav-link" data-toggle="tab" role="tab" href="#tab-add-manager">@lang('lang.manager')</a>
                 </li>
                 <li class="nav-item nav-item-setting-survey" id="send-survey-setting">
                     <a class="nav-link" data-toggle="tab" role="tab" href="#tab-send-mails">@lang('lang.send_survey')</a>

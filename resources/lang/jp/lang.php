@@ -201,6 +201,7 @@ return [
     */
 
     'add_manager' => 'Add manager',
+    'manager' => 'Manager',
     'editor' => 'Editor',
     'role' => 'Role',
 
@@ -264,6 +265,8 @@ return [
         manage survey
     */
    
+   'manage_survey' => 'Manage survey',
+   'confirm_close_to_edit' => 'The survey is open, you must close the survey before editing!',
    'close_survey_success' => 'Close survey successful!',
    'delete_survey_success' => 'Delete survey successful!',
    'open_survey_success' => 'Open survey successful!',

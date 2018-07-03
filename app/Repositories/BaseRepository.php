@@ -232,7 +232,7 @@ abstract class BaseRepository implements BaseInterface
 
     public function update($id, $input)
     {
-        $model = $this->model->findOrFail($id);
+        $model = $this->model->withTrashed()->findOrFail($id);
         $model->fill($input);
         $model->save();
 

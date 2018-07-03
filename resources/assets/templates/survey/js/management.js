@@ -165,7 +165,19 @@ $(document).ready(function () {
     })
 
     $(document).on('click', '.edit-token-survey', function () {
-        changeToken($(this).closest('.form-group-custom').find('.input-edit-token'));
+        var element = $(this);
+        
+        if ($('#close-survey').is(':visible')) {
+            confirmWarning(
+                {message: Lang.get('lang.confirm_close_to_edit')},
+                function () {
+                    closeSurvey();
+                    changeToken(element.closest('.form-group-custom').find('.input-edit-token'));
+                }
+            );
+        } else {
+            changeToken(element.closest('.form-group-custom').find('.input-edit-token'));
+        }
     })
 
     // show change token manage survey
@@ -182,14 +194,66 @@ $(document).ready(function () {
     })
 
     $(document).on('click', '.edit-token-manage-survey', function () {
-        changeTokenManage($(this).closest('.form-group-custom').find('.input-edit-token-manage'));
+        var element = $(this);
+
+        if ($('#close-survey').is(':visible')) {
+            confirmWarning(
+                {message: Lang.get('lang.confirm_close_to_edit')},
+                function () {
+                    closeSurvey();
+                    changeTokenManage(element.closest('.form-group-custom').find('.input-edit-token-manage'));
+                }
+            );
+        } else {
+            changeTokenManage(element.closest('.form-group-custom').find('.input-edit-token-manage'));
+        }
     })
+
+    $(document).on('click', '#edit-survey', function(event) {
+        event.preventDefault();
+        var redirect = $(this).attr('data-url');
+
+        if ($('#close-survey').is(':visible')) {
+            confirmWarning(
+                {message: Lang.get('lang.confirm_close_to_edit')},
+                function () {
+                    closeSurvey(redirect);
+                }
+            );
+        } else {
+            window.location.href = redirect;
+        }
+
+        return false;
+    });
 
 });
 
 function handelManagement(event) {
     $('.menu-management').removeClass('active');
     event.addClass('active');
+}
+
+function closeSurvey(redirect = '') {
+    var url = $('#close-survey').attr('data-url');
+
+    $.ajax({
+        method: 'GET',
+        url: url,
+        dataType: 'json',
+        success: function (data) {
+            if (data.success) {
+                $('#close-survey').addClass('hide-div');
+                $('#open-survey').removeClass('hide-div');
+
+                if (redirect) {
+                    window.location.href = redirect;
+                }
+            } else {                        
+                alertDanger({message: data.message});
+            }
+        }
+    });
 }
 
 function changeToken(element) {
@@ -273,7 +337,6 @@ function changeTokenManage(element) {
                         $('#close-survey').attr('data-url', data.close_survey_url);
                         $('#open-survey').attr('data-url', data.open_survey_url);
                         $('#edit-survey').attr('data-url', data.edit_survey_url);
-                        $('#edit-survey').attr('href', data.edit_survey_url);
                         $('#clone-survey').attr('data-url', data.clone_survey_url);
                         $('.input-edit-token-manage').attr('data-token-manage', data.new_token_manage);
                         $('.input-edit-token-manage').attr('data-original-title', data.new_token_manage);
