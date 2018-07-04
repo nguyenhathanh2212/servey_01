@@ -211,21 +211,8 @@ trait ClientInformation
 
     public function updateInviteWithIncognito($survey, $clientIp, $limitAnswer) 
     {
-        // process limit number of times answer
-        $timesAnswer = $survey->results->where('client_ip', $clientIp)
-            ->pluck('created_at')
-            ->unique()->count();
-
-        if ($limitAnswer != config('settings.survey_setting.answer_unlimited') 
-            && $timesAnswer >= $limitAnswer) {
-            throw new Exception("Number of times answer overed limit", 1);
-        }
-
-        // if answers more 2 times then dont update answer_mail, number_invite, and number_answer
-        if ($timesAnswer >= 1) {
-            return;
-        }
-
+        // if user is Incognito then not limit number answers
+        
         $inviter = $survey->invite;
 
         if (!empty($inviter)) {

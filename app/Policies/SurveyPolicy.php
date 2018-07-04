@@ -55,8 +55,8 @@ class SurveyPolicy
     {
         $members = $survey->members->pluck('id')->all();
 
-        // only creator, editor can edit survey.
-        if (in_array($user->id, $members)) {
+        // only creator, editor can edit survey and just can edit when survey is not open.
+        if (in_array($user->id, $members) && $survey->status != config('settings.survey.status.open')) {
             return true;
         }
 
@@ -67,8 +67,8 @@ class SurveyPolicy
     {
         $members = $survey->members->pluck('id')->all();
 
-        // only creator, editor can edit survey.
-        if (in_array($user->id, $members)) {
+        // only creator, editor can edit survey and just can edit when survey is not open.
+        if (in_array($user->id, $members) && $survey->status != config('settings.survey.status.open')) {
             return true;
         }
 
@@ -133,12 +133,5 @@ class SurveyPolicy
         }
 
         return false;
-    }
-
-    public function before(User $user)
-    {
-        if ($user->isAdmin()) {
-            return true;
-        }
     }
 }

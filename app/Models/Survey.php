@@ -172,6 +172,10 @@ class Survey extends Model
         $memberList = '';
 
         foreach ($members as $member) {
+            if ($member->pivot->role == Survey::OWNER) {
+                continue;
+            }
+
             $memberList .= $member->email . ',' . $member->pivot->role . '/';
         }
 

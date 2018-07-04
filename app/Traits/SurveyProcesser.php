@@ -9,6 +9,7 @@ use App\Models\Survey;
 use App\Mail\ManageSurvey;
 use App\Mail\InviteSurvey;
 use Mail;
+use Carbon\Carbon;
 
 trait SurveyProcesser
 {
@@ -61,7 +62,7 @@ trait SurveyProcesser
                 if (!empty($value['next_time'])) {
                     $nextRemindTime = [
                         'key' => config('settings.setting_type.next_remind_time.key'),
-                        'value' => $value['next_time'],
+                        'value' => !empty($value['next_time']) ? Carbon::parse($value['next_time'])->format('Y-m-d H:i:s') : null,
                     ];
 
                     array_push($resultData, $nextRemindTime);
@@ -269,7 +270,7 @@ trait SurveyProcesser
             $answerData['update'] = config('settings.survey.answer_update.updated');
 
             if (empty($questionCreated) && !empty($questionRepo)) {
-                $questionCreated = $questionRepo->where('id', $answer['question_id'])->first();
+                $questionCreated = $questionRepo->withTrashed()->where('id', $answer['question_id'])->first();
             }
 
             $answerCreated = $questionCreated->answers()->create($answerData);

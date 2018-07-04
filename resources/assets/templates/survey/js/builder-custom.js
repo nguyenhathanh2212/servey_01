@@ -1009,22 +1009,35 @@ jQuery(document).ready(function () {
     } );
 
     var form = $(".survey-form");
-    var validator = form.validate({
-        debug: false,
-        rules: {
-            title: {
-                required: true,
-                maxlength: 255
-            },
-            end_time: {
-                more_than_30_minutes: true,
-                after_start_time: true
-            },
-            start_time: {
-                start_time_after_now: true
-            },
-        }
-    });
+    
+    if (surveyData.data('page') === 'create' || $('#update-survey-draft').length) {
+        var validator = form.validate({
+            debug: false,
+            rules: {
+                title: {
+                    required: true,
+                    maxlength: 255
+                },
+                end_time: {
+                    more_than_30_minutes: true,
+                    after_start_time: true
+                },
+                start_time: {
+                    start_time_after_now: true
+                },
+            }
+        });
+    } else {
+        var validator = form.validate({
+            debug: false,
+            rules: {
+                title: {
+                    required: true,
+                    maxlength: 255
+                },
+            }
+        });
+    }
 
     function validateSurvey() {
         if (!form.valid()) {

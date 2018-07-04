@@ -281,6 +281,10 @@ class SurveyController extends Controller
         // check survey exists with token manage and get data
         $survey = $this->surveyRepository->getSurveyByTokenManage($tokenManage);
 
+        if (Auth::user()->cannot('edit', $survey)) {
+            return view('clients.layout.404');
+        }
+
         if (!$survey) {
             return redirect()->route('survey.survey.show-surveys');
         }
@@ -301,7 +305,7 @@ class SurveyController extends Controller
         try {
             $survey = $this->surveyRepository->getSurveyFromTokenManage($token);
 
-            if (Auth::user()->cannot('edit', $survey)) {
+            if (Auth::user()->cannot('update', $survey)) {
                 throw new Exception("Not permitted edit!", 403);
             }
 

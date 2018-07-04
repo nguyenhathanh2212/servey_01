@@ -1308,3 +1308,7 @@ i {
         margin-right: -8px !important;
     }
 }
+
+.social-icons a {
+    padding-top: 4px;
+}

@@ -106,7 +106,7 @@ class ResendReminderEmailCommand extends Command
 
                     $settingId = $first->key == config('settings.setting_type.next_remind_time.key') ? $first->id : $last->id;
                     $nextReminderTime = new Datetime($reminderTime->toDateTimeString());
-                    $nextReminderTime = $nextReminderTime->format('m/d/Y g:i A');
+                    $nextReminderTime = $nextReminderTime->format('Y-m-d H:i:s');
                     $this->settingRepository->update($settingId, ['value' => $nextReminderTime]);
                 }
             }
@@ -115,11 +115,9 @@ class ResendReminderEmailCommand extends Command
 
     public function queueMail($survey)
     {
-        $inviteEmails = explode('/', $survey->invite->invite_mails);
-        $inviteEmails = array_values(array_filter($inviteEmails, 'strlen'));
-        $answerEmails = explode('/', $survey->invite->answer_mails);
-        $answerEmails = array_values(array_filter($answerEmails, 'strlen'));
-        $inviteEmails = array_diff($inviteEmails, $answerEmails);
+        $inviteEmails = $survey->invite->invite_mails_array;
+        $answerEmails = $survey->invite->answer_mails_array;
+        $inviteEmails = array_unique(array_merge($inviteEmails, $answerEmails));
         $numberEmails = count($inviteEmails);
 
         if (count($inviteEmails)) {
@@ -130,7 +128,9 @@ class ResendReminderEmailCommand extends Command
                 'link' => route('survey.create.do-survey', $survey->token),
             ];
 
-            Mail::to($inviteEmails)->queue(new ReminderEmail($data));
+            foreach ($inviteEmails as $mail) {
+                Mail::to($mail)->queue(new ReminderEmail($data));
+            }
             $this->info("Send $numberEmails emails success!");
         }
     }

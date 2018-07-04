@@ -248,26 +248,30 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
         $membersData = [];
         $ownerId = $survey->members()->wherePivot('role', Survey::OWNER)->first()->id;
 
-        foreach ($data['members'] as $member) {
-            $memberId = $userRepo->where('email', $member['email'])->first()->id;
+        // only owner can edit members 
+        if (Auth::user()->id == $ownerId) {
+            foreach ($data['members'] as $member) {
+                $memberId = $userRepo->where('email', $member['email'])->first()->id;
 
-            if ($memberId == $ownerId || $memberId == Auth::user()->id || $member['role'] == Survey::OWNER) {
-                throw new Exception("Can not edit member", 1);
+                if ($memberId == $ownerId || $member['role'] == Survey::OWNER) {
+                    throw new Exception("Can not edit member", 1);
+                }
+
+                $membersData[$memberId] = [
+                    'role' => $member['role'],
+                    'status' => Survey::APPROVE,
+                ];
             }
 
-            $membersData[$memberId] = [
-                'role' => $member['role'],
-                'status' => Survey::APPROVE,
-            ];
+            $survey->members()->wherePivot('role', '!=', Survey::OWNER)->sync($membersData);
         }
-
-        $survey->members()->wherePivot('role', '!=', Survey::OWNER)->sync($membersData);
 
         // update invite mail
         $inviteData = $data['invited_email'];
+        $inviter = $survey->invite;
 
-        if (!empty($survey->invite) || !empty($inviteData['emails'])) {
-            $answerMails = $answerOld = !empty($survey->invite) ? $survey->invite->answer_mails : '';
+        if (!empty($inviter) || !empty($inviteData['emails'])) {
+            $answerMails = $answerOld = !empty($inviter) ? $inviter->answer_mails : '';
             
             $answerOld = collect(!empty($answerOld) ? explode('/', trim($answerOld, '/')) : []);
             $answerDelete = $answerOld->diff($inviteData['answer_emails'])->all();
@@ -291,15 +295,15 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
                 'subject' => $inviteData['subject'],
                 'message' => $inviteData['message'],
                 'status' => config('settings.survey.invite_status.not_finish'),
-                'number_invite' => count($inviteData['emails']) + count($inviteData['answer_emails']),
+                'number_invite' => count($inviteData['emails']),
                 'number_answer' => count($inviteData['answer_emails']),
             ];
 
-            if (empty($survey->invite)) {
+            if (empty($inviter)) {
                 $survey->invite()->create($updateInviteData);
             } else {
                 if ($survey->isSendUpdateOption()) {
-                    $sendUpdateMails = collect($survey->invite->send_update_mails_array);
+                    $sendUpdateMails = collect($inviter->send_update_mails_array);
                     $inviteMails = $inviteData['emails'];
 
                     $newSendUpdaateMails = $sendUpdateMails->reject(function ($mail) use ($inviteMails) {
@@ -312,6 +316,9 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
 
                     $updateInviteData['send_update_mails'] = join('/', $newSendUpdaateMails->all()) . '/';
                 }
+
+                $updateInviteData['number_invite'] = count($inviteData['emails']) + ($inviter->number_answer - count($answerDelete));
+                $updateInviteData['number_answer'] = $inviter->number_answer - count($answerDelete);
                 
                 $survey->invite()->update($updateInviteData);
             }
@@ -400,7 +407,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
                 $value['update'] = $updateStatus;
             }
 
-            $question = $questionRepo->where('id', $key)->first();
+            $question = $questionRepo->withTrashed()->where('id', $key)->first();
             $question->update($value);
 
             if ($question->type == config('settings.question_type.date')) {
@@ -419,7 +426,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
                 $value['update'] = $updateStatus;
             }
 
-            $answer = $answerRepo->where('id', $key)->first();
+            $answer = $answerRepo->withTrashed()->where('id', $key)->first();
             $answer->update($value);
 
             // update answer media if has
@@ -466,7 +473,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
         if ($status == config('settings.survey.status.open')) {
             $optionUpdate = $data->get('option');
             $sectionsId = $survey->sections->pluck('id')->all();
-            $updatedQuestionIds = $questionRepo->whereIn('section_id', $sectionsId)
+            $updatedQuestionIds = $questionRepo->withTrashed()->whereIn('section_id', $sectionsId)
                 ->where('update', config('settings.survey.question_update.updated'))
                 ->pluck('id')->all();
 
@@ -784,9 +791,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
         $survey = $this->model->withTrashed()->with([
             'settings',
             'invite',
-            'members' => function ($query) {
-                $query->where('role', '!=', Survey::OWNER);
-            },
+            'members',
             'sections' => function ($query) {
                 $query->with([
                     'questions' => function ($query) {
