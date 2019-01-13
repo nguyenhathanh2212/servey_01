@@ -109,16 +109,17 @@ class SurveyTableSeeder extends Seeder
                     $content = $this->getContent($key);
                 }
 
-                $results[] = [
-                    'answer_id' => $answer_id,
-                    'question_id' => $question_id,
-                    'content' => $content,
-                    'client_ip' => 0,
-                    'survey_id' => $user->members()->get()->random()->pivot->survey_id,
-                ];
+                // $results[] = [
+                //     'answer_id' => $answer_id,
+                //     'question_id' => $question_id,
+                //     'content' => $content,
+                //     'client_ip' => 0,
+                //     'survey_id' => $user->members()->get()->random()->pivot->survey_id,
+                //     'token' => $token,
+                // ];
             }
 
-            $user->results()->createMany($results);
+            // $user->results()->createMany($results);
         }
     }
 

@@ -6,6 +6,7 @@ use DB;
 use Exception;
 use App\Repositories\Result\ResultInterface;
 use App\Repositories\Question\QuestionInterface;
+use App\Repositories\Answer\AnswerInterface;
 use App\Repositories\Like\LikeInterface;
 use App\Repositories\Invite\InviteInterface;
 use App\Repositories\Setting\SettingInterface;
@@ -248,7 +249,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
         $membersData = [];
         $ownerId = $survey->members()->wherePivot('role', Survey::OWNER)->first()->id;
 
-        // only owner can edit members 
+        // only owner can edit members
         if (Auth::user()->id == $ownerId) {
             foreach ($data['members'] as $member) {
                 $memberId = $userRepo->where('email', $member['email'])->first()->id;
@@ -272,7 +273,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
 
         if (!empty($inviter) || !empty($inviteData['emails'])) {
             $answerMails = $answerOld = !empty($inviter) ? $inviter->answer_mails : '';
-            
+
             $answerOld = collect(!empty($answerOld) ? explode('/', trim($answerOld, '/')) : []);
             $answerDelete = $answerOld->diff($inviteData['answer_emails'])->all();
 
@@ -319,7 +320,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
 
                 $updateInviteData['number_invite'] = count($inviteData['emails']) + ($inviter->number_answer - count($answerDelete));
                 $updateInviteData['number_answer'] = $inviter->number_answer - count($answerDelete);
-                
+
                 $survey->invite()->update($updateInviteData);
             }
         }
@@ -354,7 +355,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
             'start_time' => $data->get('start_time'),
             'end_time' => $data->get('end_time'),
         ];
-        
+
         $surveyInputs['status'] = $status;
         $deleteData = $data->get('delete');
         $updateData = $data->get('update');
@@ -372,15 +373,15 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
         }
 
         // if option update is "send all question survey again" OR havent invite_list, then set option update of elements to default (no-update)
-        if (($status == config('settings.survey.status.open') 
-            && $data->get('option') == config('settings.option_update.send_all_question_survey_again')) 
+        if (($status == config('settings.survey.status.open')
+            && $data->get('option') == config('settings.option_update.send_all_question_survey_again'))
             ||  empty($inviter) || (empty($inviter->answer_mails) && empty($inviter->send_update_mails))) {
             $updateStatus = config('settings.survey.section_update.default');
         }
 
         // update base information of survey
         $survey->update($surveyInputs);
-        
+
         // delete sections, questions, answers has deleted
         $answerRepo->deleteAnswersById($deleteData['answers']);
         $questionRepo->deleteQuestionsById($deleteData['questions']);
@@ -397,7 +398,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
 
         // update questions
         foreach ($updateData['questions'] as $key => $value) {
-            if (!$isDeleteClientResult && !empty($value['update']) 
+            if (!$isDeleteClientResult && !empty($value['update'])
                 && $value['update'] == config('settings.survey.question_update.updated')) {
                 $isDeleteClientResult = true;
             }
@@ -734,25 +735,64 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
     public function getResultExport($survey, $month = '')
     {
         $requiredSurvey = $survey->required;
-        $questions = app(QuestionInterface::class)->withTrashed()
-            ->whereIn('section_id', $survey->sections->pluck('id')->all())
-            ->with('settings', 'section')->get()->sortBy('order')->sortBy('section_order');
-        $results = '';
+        $redirectIds = $survey->sections->groupBy('redirect_id')->keys()->toArray();
+
+        $redirectQuestions = app(AnswerInterface::class)->withTrashed()
+            ->whereIn('id', $redirectIds)
+            ->get()
+            ->groupBy('question_id');
+
+        // $numberSheet = 1;
+
+        // foreach ($redirectQuestions as $answers) {
+        //     $numberSheet *= $answers->count();
+        // }
+
+        $allResults = '';
 
         if ($month) {
             $dateMonthArray = explode('-', $month);
             $startMonth = Carbon::createFromDate($dateMonthArray[1], $dateMonthArray[0])->startOfMonth();
             $endMonth = Carbon::createFromDate($dateMonthArray[1], $dateMonthArray[0])->endOfMonth();
-            $results = $survey->results()->where('created_at', '>=', $startMonth)->where('created_at', '<', $endMonth);
+            $allResults = $survey->results()->where('created_at', '>=', $startMonth)->where('created_at', '<', $endMonth);
         } else {
-            $results = $survey->results();
+            $allResults = $survey->results();
         }
 
-        $results = $this->getResultsFollowOptionUpdate($survey, $results, app(UserInterface::class));
-        $results = $results->with('question.section', 'answer.settings', 'user')->get()->groupBy('token');
+        // $results = $this->getResultsFollowOptionUpdate($survey, $results, app(UserInterface::class));
 
+        $allResults = $allResults->with('question.section', 'answer.settings', 'user')->get(); //->groupBy('token');
+
+        $sheets = [];
+        foreach ($redirectQuestions as $answers) {
+            foreach ($answers as $answer) {
+                $sectionIds = $survey->sections->whereIn('redirect_id', [0, $answer->id])->pluck('id')->all();
+// dump($sectionIds);
+                $questions = app(QuestionInterface::class)->withTrashed()
+                    ->whereIn('section_id', $sectionIds)
+                    ->whereHas('settings', function ($query) {
+                        $query->whereNotIn('key', [
+                            config('settings.question_type.title'),
+                            config('settings.question_type.image'),
+                            config('settings.question_type.video'),
+                        ]);
+                    })
+                    ->with('settings', 'section', 'answerResults')
+                    ->get()
+                    ->sortBy('order')
+                    ->sortBy('section_order');
+                // $resultTokens = 
+            }
+        }
+
+        // dd($sheets);
+
+        
+        
+
+            // dd($questions->pluck('id'), $results);
         return [
-            'questions' => $questions,
+            'sheets' => $sheets,
             'results' => $results,
             'requiredSurvey' => $requiredSurvey,
         ];
@@ -804,8 +844,8 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
                         $query->with([
                             'answers' => function ($query) {
                                 $query->with('media', 'settings');
-                            }, 
-                            'settings', 
+                            },
+                            'settings',
                             'media',
                         ]);
                     },
@@ -887,8 +927,8 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
                     $query->where('update', config('settings.survey.section_update.updated'))->with([
                         'questions' => function ($query) {
                             $query->where('update', config('settings.survey.question_update.updated'))->with([
-                                'settings', 
-                                'media', 
+                                'settings',
+                                'media',
                                 'answers' => function ($queryAnswer) {
                                     $queryAnswer->with('settings', 'media');
                                 }
@@ -961,7 +1001,7 @@ class SurveyRepository extends BaseRepository implements SurveyInterface
                 $query->where('user_id', $userId)->where('role', Survey::OWNER);
             })->count();
     }
-    
+
     public function closeSurvey($survey)
     {
         $survey->settings()->delete();
