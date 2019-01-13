@@ -1,4 +1,7 @@
-<ul class="clearfix form-wrapper ul-preview ul-content-preview" id="section-{{ $data['section']->order }}">
+<ul class="clearfix form-wrapper ul-preview ul-content-preview"
+    id="section-{{ $data['section']->order }}"
+    data-redirect-id="{{ $data['section']->redirect_id }}"
+    data-current-id="{{ $data['section']->id }}">
     <li class="form-line content-title-section">
         <div class="form-group">
             <h3 class="title-section {{ $data['section']->order }}" id="section-id-preview" data-order="{{ $data['section']->order }}">
@@ -31,7 +34,9 @@
                 @include ('clients.survey.detail.elements.image')
             @else
                 <span class="index-question">{{ ++ $indexQuestion }}</span>
-                <h4 class="title-question question-survey {{ $question->required ? 'required-question' : '' }}"
+                <h4 class="title-question question-survey
+                    {{ $question->required ? 'required-question' : '' }}
+                    {{ $questionSetting == config('settings.question_type.redirect') ? 'redirect-question' : ''  }}"
                     data-type="{{ $questionSetting }}" data-id="{{ $question->id }}"
                     data-required="{{ $question->required }}">
                     {!! nl2br(e($question->title)) !!}
@@ -54,7 +59,8 @@
                 @elseif ($questionSetting == config('settings.question_type.long_answer'))
                     @include ('clients.survey.detail.elements.long-question')
                 <!-- multi choice -->
-                @elseif ($questionSetting == config('settings.question_type.multiple_choice'))
+                @elseif ($questionSetting == config('settings.question_type.multiple_choice')
+                    || $questionSetting == config('settings.question_type.redirect'))
                     @include ('clients.survey.detail.elements.multiple-choice')
                 <!-- check boxes -->
                 @elseif ($questionSetting == config('settings.question_type.checkboxes'))
@@ -74,10 +80,10 @@
     @endforeach
 
     <li class="li-question-review form-line">
-        @if ($data['currentSection'] > config('settings.section_order_default'))
+        @if ($data['index_section'] != config('settings.index_section.start'))
             <a href="javascript:void(0)" class="btn-action-preview previous-section-survey">@lang('lang.previous')</a>
         @endif
-        @if ($data['numOfSection'] > $data['currentSection'])
+        @if ($data['index_section'] != config('settings.index_section.end'))
             <a href="javascript:void(0)" data-url="{{ route('survey.create.do-survey', $data['survey']->token) }}"
                 class="btn-action-preview next-section-survey">@lang('lang.next')</a>
         @endif
@@ -91,8 +97,7 @@
             }
         @endphp
 
-        @if (($data['numOfSection'] == $data['currentSection'] || $data['numOfSection'] == config('settings.number_1')) 
-            && $data['survey']->isOpen() && $currentUrl  == route('survey.create.do-survey', $data['survey']->token))
+        @if ($data['index_section'] == config('settings.index_section.end'))
             {!! Form::button(trans('profile.send'), ['class' => 'btn-action-preview btn-action-preview-submit',
                 'data-url' => route('survey.create.storeresult', $data['survey']->token),
                 'data-redirect' => route('show-complete-answer', $data['survey']->token)]) !!}

@@ -87,9 +87,8 @@ class ManagementSurvey extends Controller
         }
         
         $survey = $this->surveyRepository->getSurvey($token);
-        $numOfSection = $survey->sections->count();
         // at line 42 of file app/Traits/DoSurvey.php
-        $data = $this->getDetailSurvey($survey, $numOfSection);
+        $data = $this->getDetailSurvey($survey);
         $linkManage = route('survey.management', $survey->token_manage);
         $link = route('survey.create.do-survey', $token);
 

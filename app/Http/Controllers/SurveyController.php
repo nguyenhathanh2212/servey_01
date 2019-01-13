@@ -228,56 +228,73 @@ class SurveyController extends Controller
 
     public function show(Request $request, $token)
     {
-        if (!$request->ajax() && Session::has('url_current')) {
-            Session::forget('url_current');
-        }
-
-        $survey = $this->surveyRepository->getSurvey($token);
-        $numOfSection = $survey->sections->count();
-
-        if ($request->ajax()) {
-            $currentSection = $request->session()->get('current_section_survey');
-            $request->session()->put('current_section_survey', ++ $currentSection);
-            $sectionsId = $survey->sections->sortBy('order')->pluck('id')->all();
-            $section = $this->surveyRepository->getSectionCurrent($survey, $sectionsId[$currentSection - 1]);
-            $sectionOrder = 'section-' . $section->order;
-
-            $data = [
-                'section' => $section,
-                'currentSection' => $currentSection,
-                'numOfSection' => $numOfSection,
-                'survey' => $survey,
-            ];
-
-            return response()->json([
-                'success' => true,
-                'html' => view('clients.survey.detail.content-survey', compact('data'))->render(),
-                'section_order' => $sectionOrder,
-            ]);
-        }
-
-        $privacy = $survey->getPrivacy();
-
-        if ($privacy == config('settings.survey_setting.privacy.private')
-            && !in_array(Auth::user()->id, $survey->members()->pluck('user_id')->all())) {
-            $inviter = $survey->invite;
-
-            if (empty($inviter) || !in_array(Auth::user()->email, $inviter->invite_mails_array)) {
-                $title = $survey->title;
-
-                if (in_array(Auth::user()->email, $inviter->answer_mails_array)) {
-                    $content = trans('lang.you_have_answered_this_survey');
-                } else {
-                    $content = trans('lang.you_do_not_have_permission');
-                }
-
-                return view('clients.survey.detail.complete', compact('title', 'content'));
+        try {
+            if (!$request->ajax() && Session::has('url_current')) {
+                Session::forget('url_current');
             }
-        }
-        // at line 42 of file app/Traits/DoSurvey.php
-        $data = $this->getDetailSurvey($survey, $numOfSection);
 
-        return view('clients.survey.detail.index', compact('data'));
+            $survey = $this->surveyRepository->getSurvey($token);
+
+            if ($request->ajax()) {
+                return $this->showAjax($request, $survey);
+            }
+
+            $privacy = $survey->getPrivacy();
+
+            if ($privacy == config('settings.survey_setting.privacy.private')
+                && !in_array(Auth::user()->id, $survey->members()->pluck('user_id')->all())) {
+                $inviter = $survey->invite;
+
+                if (empty($inviter) || !in_array(Auth::user()->email, $inviter->invite_mails_array)) {
+                    $title = $survey->title;
+
+                    if (in_array(Auth::user()->email, $inviter->answer_mails_array)) {
+                        $content = trans('lang.you_have_answered_this_survey');
+                    } else {
+                        $content = trans('lang.you_do_not_have_permission');
+                    }
+
+                    return view('clients.survey.detail.complete', compact('title', 'content'));
+                }
+            }
+            // at line 42 of file app/Traits/DoSurvey.php
+            $data = $this->getDetailSurvey($survey);
+
+            return view('clients.survey.detail.index', compact('data'));
+        } catch(Exception $e) {
+            dd($e);
+            return view('clients.layout.404');
+        }
+    }
+
+    public function showAjax($request, $survey)
+    {
+        $redirectIds = $request->redirect_ids;
+        $currentSectionId = $request->current_section_id;
+        $sectionIds = $survey->sections->whereIn('redirect_id', $redirectIds)->sortBy('order')->pluck('id')->all();
+        $currentSectionIndex = array_search($currentSectionId, $sectionIds) != false ? array_search($currentSectionId, $sectionIds) : 0;
+        $indexSection = config('settings.index_section.middle');
+        $currentSectionId = $sectionIds[$currentSectionIndex + 1];
+
+        if ($currentSectionId == end($sectionIds)) {
+            $indexSection = config('settings.index_section.end');
+        }
+
+        $section = $this->surveyRepository->getSectionCurrent($survey, $currentSectionId);
+
+        $sectionOrder = 'section-' . $section->order;
+
+        $data = [
+            'section' => $section,
+            'survey' => $survey,
+            'index_section' => $indexSection,
+        ];
+
+        return response()->json([
+            'success' => true,
+            'html' => view('clients.survey.detail.content-survey', compact('data'))->render(),
+            'section_order' => $sectionOrder,
+        ]);
     }
 
     public function edit($tokenManage)

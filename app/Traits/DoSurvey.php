@@ -5,18 +5,15 @@ use Auth, Session;
 
 trait DoSurvey
 {
-    public function getDetailSurvey($survey, $numOfSection)
+    public function getDetailSurvey($survey)
     {
-        Session::put('current_section_survey', config('settings.section_order_default'));
-        $currentSection = config('settings.section_order_default');
-        $sectionsId = $survey->sections->sortBy('order')->pluck('id')->all();
-        $section = $this->surveyRepository->getSectionCurrent($survey, $sectionsId[$currentSection - 1]);
+        $sectionIds = $survey->sections->sortBy('order')->pluck('id')->all();
+        $section = $this->surveyRepository->getSectionCurrent($survey, $sectionIds[0]);
 
         return [
             'survey' => $survey,
             'section' => $section,
-            'numOfSection' => $numOfSection,
-            'currentSection' => $currentSection,
+            'index_section' => config('settings.index_section.start'),
         ];
     }
 }

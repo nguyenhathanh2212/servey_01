@@ -23,12 +23,22 @@ class ResultRequest extends FormRequest
      */
     public function rules()
     {
+        $questionTypes = implode(',', [
+            config('settings.question_type.short_answer'),
+            config('settings.question_type.long_answer'),
+            config('settings.question_type.multiple_choice'),
+            config('settings.question_type.checkboxes'),
+            config('settings.question_type.date'),
+            config('settings.question_type.time'),
+            config('settings.question_type.redirect'),
+        ]);
+
         $rules = [
             'survey_token' => 'required',
             'email' => 'email',
             'user_id' => 'integer|min:0',
             'sections.*.questions.*.question_id' => 'required|integer|distinct',
-            'sections.*.questions.*.type' => 'required|integer|between:1,6',
+            'sections.*.questions.*.type' => "required|integer|in:{$questionTypes}",
             'sections.*.questions.*.require' => 'required|integer|between:0,1',
         ];
 

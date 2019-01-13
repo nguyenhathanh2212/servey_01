@@ -170,10 +170,11 @@ $(document).ready(function() {
         return false;
     });
 
+   var redirectIds = [0];
+
     $(document).on('click', '.next-section-survey', function(event) {
         event.preventDefault();
         event.stopPropagation();
-
         var selector = $(this).closest('.ul-content-preview');
 
         if($('.page-doing-survey').is(':visible')) {
@@ -183,7 +184,35 @@ $(document).ready(function() {
         }
 
         showLoaderSection();
-        if ($(selector).attr('data-next')) {
+
+        var redirectId = 0;
+        var currentId = selector.attr('data-current-id');
+        var answerRedirects = [];
+
+        if ($(this).closest('.ul-content-preview').find('.redirect-question').length) {
+            var questionId = $('.redirect-question').attr('data-id');
+            $(`input[name='answer${questionId}']`).each(function() {
+                answerRedirects.push($(this).closest('.item-answer').attr('data-id'));
+            });
+
+            redirectId = $(`input[name='answer${questionId}']:checked`).closest('.item-answer').attr('data-id');
+        }
+
+        if (redirectId && redirectIds.indexOf(redirectId) == -1) {
+            for (var i = 0; i < answerRedirects.length; i++) {
+                var index = redirectIds.indexOf(answerRedirects[i]);
+
+                if (index > -1) {
+                    redirectIds.splice(index, redirectIds.length - index);
+                    selector.nextAll('.ul-content-preview').remove();
+                    break;
+                }
+            }
+
+            redirectIds.push(redirectId);
+        }
+
+        if ($(selector).attr('data-next') && redirectId && redirectId == $(`#${$(selector).attr('data-next')}`).attr('data-redirect-id')) {
             $(selector).hide();
             $(`#${$(selector).attr('data-next')}`).show();
             autoAlignChoiceAndCheckboxIcon();
@@ -196,7 +225,10 @@ $(document).ready(function() {
                 url: dataUrl,
                 type: 'get',
                 dataType: 'json',
-                data: {},
+                data: {
+                    redirect_ids: redirectIds,
+                    current_section_id: currentId,
+                },
             })
             .done(function(data) {
                 if (data.success) {
@@ -384,9 +416,8 @@ $(document).ready(function() {
         var results = [];
         var checkResult = false;
 
-        $(element).children('.item-answer').each(function () {
+        $(element).find('.item-answer').each(function () {
             var answerId = $(this).attr('data-id');
-
             if (!answerId) {
                 checkResult = true;
                 var result = {};

@@ -310,7 +310,7 @@ return [
     'limit_answer_content' => 80,
     'detect_page_refresh' => 'max-age=0',
     'section_show_default' => 0,
-    'section_order_default' => 1,
+    'section_order_default' => 0,
     'limit_title_excel' => 25,
     'invited' => 1,
     'date_format_vn' => 'DD/MM/YYYY',
