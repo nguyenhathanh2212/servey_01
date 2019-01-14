@@ -161,7 +161,8 @@
                                                 </p>
                                             @endforeach
                                         </div>
-                                    @elseif ($result['question_type'] == config('settings.question_type.multiple_choice'))
+                                    @elseif ($result['question_type'] == config('settings.question_type.multiple_choice')
+                                        || $result['question_type'] == config('settings.question_type.redirect'))
                                         @if ($result['question']->answers->count())
                                             <div class="answer-result chart-result-answer multiple-choice-result"
                                             id="{{ $result['question']->id }}"

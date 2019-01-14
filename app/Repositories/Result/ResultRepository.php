@@ -67,7 +67,7 @@ class ResultRepository extends BaseRepository implements ResultInterface
         $sendUpdateMails = collect(!empty($inviter) ? $inviter->send_update_mails_array : []);
         $userMails = Auth::check() ? Auth::user()->email : '';
 
-        // when update result with option update is "only send question update", if user answer many times then delete old results 
+        // when update result with option update is "only send question update", if user answer many times then delete old results
         if ($survey->isSendUpdateOption() && $sendUpdateMails->contains($userMails)) {
             $timesAnswer = $survey->results->where('user_id', Auth::user()->id)
                 ->pluck('token')
@@ -119,7 +119,6 @@ class ResultRepository extends BaseRepository implements ResultInterface
     {
         $results = $survey->results();
         $results = $this->getResultsFollowOptionUpdate($survey, $results, $userRepo)->get();
-
         $results = $results->groupBy('token');
 
         $countResult = $results->count();

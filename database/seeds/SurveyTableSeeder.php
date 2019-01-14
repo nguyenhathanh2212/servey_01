@@ -61,7 +61,7 @@ class SurveyTableSeeder extends Seeder
             factory(Answer::class, 2)->create([
                 'question_id' => $question->id,
             ])->each(function ($answer) use ($faker, $user, $survey){
-                $this->seedDataAnswer($answer, $faker, $user);
+                $this->seedDataAnswer($answer, $faker, 1);
 
                 $section = factory(Section::class)->create([
                     'survey_id' => $survey->id,
@@ -115,6 +115,7 @@ class SurveyTableSeeder extends Seeder
                     'content' => $content,
                     'client_ip' => 0,
                     'survey_id' => $user->members()->get()->random()->pivot->survey_id,
+                    'token' => md5(uniqid(rand(), true)),
                 ];
             }
 
@@ -165,10 +166,10 @@ class SurveyTableSeeder extends Seeder
         }
     }
 
-    public function seedDataAnswer($answer, $faker)
+    public function seedDataAnswer($answer, $faker, $key = null)
     {
         $answer->settings()->create([
-            'key' => $faker->numberBetween(1, 2),
+            'key' => $key ? $key : $faker->numberBetween(1, 2),
             'value' => config('settings.setting_type.answer_type.key'),
         ]);
     }

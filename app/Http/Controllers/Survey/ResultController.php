@@ -82,7 +82,7 @@ class ResultController extends Controller
             $details = $data['results'];
             $countResult = $data['countResult'];
             $pageCurrent = isset($request->page) ? $request->page : 1;
-
+return ($data);
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,

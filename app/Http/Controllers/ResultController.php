@@ -121,7 +121,7 @@ class ResultController extends Controller
                         //  Set default email and name if user not login or don't have setting require email, name or both.
                         $setName = config('settings.name_unidentified');
                         $setEmail = config('settings.email_unidentified');
-                        
+
                         if ($settings[config('settings.key.requireAnswer')]) {
                             $setName = $request->get('name-answer') ?: (
                                 auth()->check() ? auth()->user()->name : config('settings.name_unidentified')
