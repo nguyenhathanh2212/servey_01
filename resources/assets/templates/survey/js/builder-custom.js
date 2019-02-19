@@ -3905,7 +3905,15 @@ jQuery(document).ready(function () {
             },
         });
 
-        $('.survey-form').find('.page-section').each(function () {
+        var blockSection = $(this).closest('.redirect-section-block').length
+            ? $(this).closest('.redirect-section-block')
+            : $('.survey-form');
+
+        $(blockSection).find('.page-section').each(function () {
+            if ($(blockSection).attr('class') == 'survey-form' && $(this).closest('.redirect-section-block').length) {
+                return;
+            }
+
             var sectionID = $(this).data('section-id');
             var sectionTitle = $(this).find('.section-header-title').val();
             var sectionIndex = $(this).find('.section-index').text();
@@ -3978,24 +3986,32 @@ jQuery(document).ready(function () {
     $('#btn-save-reorder').click(function (e) {
         e.stopPropagation();
         var prevSectionID = null;
+        var element = $(this);
 
         $('.wrap-item-section-reorder').find('.list-group-item.item-reorder').each(function (){
             var sectionID = $(this).attr('id');
-            var pageSection = $('.survey-form').find(`#${sectionID}`).clone();
-            $(`.survey-form #${sectionID}`).remove();
+            var pageSection = $('.survey-form').find(`#${sectionID}`)
+            var blockReorder = $(pageSection).closest('.redirect-question-block').length && !$(pageSection).closest('.redirect-section-block').length
+                ? $(pageSection).closest('.redirect-question-block')
+                : $(pageSection);
+
+            var blockReorderClone = $(blockReorder).clone();
 
             if (prevSectionID) {
-                $(pageSection).insertAfter($('.survey-form').find(`#${prevSectionID}`));
+                $('.survey-form').find(`#${prevSectionID}`).closest('.redirect-question-block').length && !$('.survey-form').find(`#${prevSectionID}`).closest('.redirect-section-block').length
+                    ? $(blockReorderClone).insertAfter($('.survey-form').find(`#${prevSectionID}`).closest('.redirect-question-block'))
+                    : $(blockReorderClone).insertAfter($('.survey-form').find(`#${prevSectionID}`));
             } else {
-                $(pageSection).insertAfter($('.survey-form').find('.page-section-header'));
+                $(pageSection).closest('.redirect-section-block').length
+                    ? $(blockReorderClone).insertAfter($(blockReorder).closest('.redirect-section-block').find('.redirect-section-label'))
+                    : $(blockReorderClone).insertAfter($('.survey-form').find('.page-section-header'));
             }
 
+            $(blockReorder).remove()
             prevSectionID = sectionID;
         });
 
-        $('.survey-form').find('.page-section').each(function (i) {
-            $(this).find('.section-index').text(i + 1);
-        });
+        reloadSectionIndex();
         formSortable();
         $('#modal-reorder-section').modal('hide');
     });
